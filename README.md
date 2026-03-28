@@ -24,7 +24,7 @@ Este proyecto se ha generado con la ayuda [*Opencode*](https://opencode.ai/) y [
 - [Configuración de la tarjeta *microSD* para la radio de internet](#configuración-de-la-tarjeta-microsd-para-la-radio-de-internet)
 - [El Hardware](#el-hardware)
 
-**NOTA**: Puedes ver este fichero en *pdf* con *README.pdf* y en *html* con *README.html*. Este último fichero, si lo abres en un navegador, es el más cómodo para copiar y luego pegar en los ficheros de la *RPi Zero*.
+**NOTA**: Para la lectura *off-line* puedes ver este fichero en *pdf* con *README.pdf* y en *html* con *README.html*. Este último fichero, si lo abres en un navegador, es el más cómodo para copiar y luego pegar en los ficheros de la *RPi Zero*.
 
 ## Requisitos Previos
 
