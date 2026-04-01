@@ -3,4 +3,7 @@ ParaBorrar/
 target/
 .ferrite/
 Radio_Internet_RPiZero_rust.txt
+.gitignore
+analisis_proyecto.md
+
 

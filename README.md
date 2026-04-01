@@ -2,9 +2,9 @@
 
 **Angel de la Iglesia Gonzalo**
 
-**Versión/rev**: 1/0
+**Versión/rev**: 1/1
 
-**Fecha**:20250318
+**Fecha**:20250401
 
 **Abstract**: This project is for building an internet radio using a *Raspberry Pi Zero* board and a program written in *rust* to control the *RPi*, a DAC converter, and a 16-column, 2-row display. The amplifier uses a *PAM8403-Amp3W* module with a potentiometer. [*VLC*](https://images.videolan.org/vlc/index.es.html) is used for playing radio stations.
 
@@ -23,6 +23,8 @@ Este proyecto se ha generado con la ayuda [*Opencode*](https://opencode.ai/) y [
 - [Radio Internet - RPi Zero](#radio-internet---rpi-zero) (Repositorio Github)
 - [Configuración de la tarjeta *microSD* para la radio de internet](#configuración-de-la-tarjeta-microsd-para-la-radio-de-internet)
 - [El Hardware](#el-hardware)
+- [Consideraciones sobre el software del proyecto](#consideraciones-sobre-el-software-del-proyecto)
+
 
 **NOTA**: Para la lectura *off-line* puedes ver este fichero en *pdf* con *README.pdf* y en *html* con *README.html*. Este último fichero, si lo abres en un navegador, es el más cómodo para copiar y luego pegar en los ficheros de la *RPi Zero*.
 
@@ -50,15 +52,53 @@ sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
 libc6-dev-armhf-cross
 ```
 
-**3. Intalar QEMU**
+**3. Instalar y configurar Docker**
+
+Instalar desde repositorios Debian: 
+ 
+```sh
+sudo apt install -y docker.io docker-compose
+```
+
+Añadir usuario al grupo docker 
+
+```sh
+sudo usermod -aG docker $USER
+```
+
+Iniciar y habilitar Docker 
+
+```sh
+sudo systemctl enable --now docker
+```
+
+Cierra y vuelve a abrir la sesión (o ejecuta `newgrp docker`)
+
+Verificar                                                                                                          
+
+```sh
+docker run hello-world
+```
+
+Si está bien instalado verás un mensaje largo que empieza con algo semejante a:
+
+```sh
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+...
+...
+...
+```
+
+**4. Intalar QEMU**
 
 Es necesario para emular binarios ARM durante la compilación.
 
 ```sh
-sudo apt install -y qemu-user qemu-user-static
+sudo apt install -y qemu-user qemu-user-static binfmt-support
 ```
 
-**4. Agregar target de Rust**
+**5. Agregar target de Rust**
 
 Para añadir el *target*:
 
@@ -66,7 +106,7 @@ Para añadir el *target*:
 rustup target add arm-unknown-linux-gnueabihf
 ```
 
-**5. Instalar cross** 
+**6. Instalar cross** 
 
 Es la herramienta de compilación cruzada:
 
@@ -533,11 +573,13 @@ mkdir ~./bin
 ```
 ### 3.2 Copiar el programa del ordenador de desarrollo a *~./bin* en la *RPi Zero*
 
-Para copiar el programa de radio de internet, desde el *PC de Desarrollo* a la *RPi Zero* utilizo [*mc*](https://midnight-commander.org/).
+Para copiar el programa de radio de internet, desde el *PC de Desarrollo* a la *RPi Zero* utilizo [*mc*](https://midnight-commander.org/). La Imagen del terminal usando `mc` se muestra en la figura siguiente.
 
 ![Imagen del terminal usando mc](assets/captura_mc.png)
 
 Nos ponemos en el subdirectorio `dist` del proyecto (que está debajo de donde tenemos *Cargo.toml*) y abrimos un terminal. Tecleamos `mc`. En la ventana que se abre seleccionamos `Derecho` y seleccionamos `conexión por SSH`, en la ventana que se abre tecleamos `usuario@192.168.1.xxx` (la dirección que corresponda) y damos aceptar.Entramos en ´/home/usuario/bin´ y pinchamos en el panel izquierdo. Pulsamos `CTRL r` para actualizar el directorio `dist` y `MAY *` para seleccionar todos los archivos y pulsamos `F5` para copiar todos los archivos en el subdirectorio `bin` de la *RPi Zero*.
+
+> **NOTA**: Asegurate que el ejecutable `radio_player` tiene permiso de ejecución. Si no la tiene haz: `chmod +x radio_player`.
 
 ### 3.2 Inicio automático del programa en el arranque
 
@@ -801,6 +843,110 @@ La imagen siguiente muestra los puentes de la parte trasera en mi módulo (tambi
 └──────────────────────┘
 ```
 
+
+# Consideraciones sobre el software del proyecto
+
+## Resumen
+
+Este proyecto es un reproductor de radio por internet para Raspberry Pi Zero, escrito en Rust, que controla:
+
+- DAC PCM5102A para audio
+- Display LCD1602 con I2C
+- 4 botones GPIO para control
+
+
+## Tecnologías/Componentes usados en el proyecto
+
+### 1. QEMU (`qemu-user`, `qemu-user-static`)
+
+**Propósito**:
+
+- **Compilación cruzada**: Emula binarios ARM durante la compilación en PCs x86_64
+- **Verificación**: Permite probar el binario ARM compilado en el PC de desarrollo
+- Se usa junto con `cross` para compilar para Raspberry Pi Zero
+
+**¿Necesario?** **Sí, pero solo para compilar y verificar.**
+
+**Alternativas**:
+
+- Compilar directamente en la RPi Zero (es lento pero funciona)
+- Usar `rustup target add` + compiladores ARM sin `cross` (menos automático)
+
+**Comandos de uso** (documentados en README):
+```bash
+qemu-arm -L /usr/arm-linux-gnueabihf dist/radio_player
+```
+
+
+### 2. Docker
+
+**¿Por qué se pide?** La herramienta **`cross`** (usada en `build_for_rpi.sh`) necesita Docker por diseño para crear contenedores con el entorno ARM completo.
+
+**¿Necesario?** **Sí, si usas `cross`** para compilación cruzada.
+
+
+### 3. Scripts Bash (.sh)
+
+| Script | Función |
+|--------|---------|
+| `build_for_rpi.sh` | Compilación cruzada ARM usando `cross` y copia archivos a `dist/` |
+| `run_on_rpi.sh` | Ejecuta el reproductor en la RPi |
+| `run_cvlc.sh` | Wrapper para cvlc (ejecuta VLC como usuario normal) |
+| `check_gpio.sh` | Diagnóstico de GPIO y verificación de requisitos en la RPi |
+
+
+## Alternativas para Evitar Docker
+
+Si deseas evitar Docker, tienes dos opciones:
+
+### Opción 1: Compilar directamente en la RPi Zero (Recomendada si no quieres Docker)
+
+```bash
+# En la RPi Zero:
+rustup target add arm-unknown-linux-gnueabihf
+cargo build --release
+```
+
+**Ventajas**: No necesita Docker, QEMU ni configuración compleja
+**Inconvenientes**: La compilación es muy lenta 
+
+### Opción 2: Compilación cruzada sin `cross`
+
+Modificar `build_for_rpi.sh` para usar `cargo build` directamente:
+
+```bash
+#!/bin/bash
+
+echo "Compilando para Raspberry Pi Zero (arm-unknown-linux-gnueabihf)..."
+
+rustup target add arm-unknown-linux-gnueabihf
+
+cargo build --release --target arm-unknown-linux-gnueabihf
+
+if [ $? -eq 0 ]; then
+    echo "¡Compilación exitosa!"
+    mkdir -p dist
+    cp target/arm-unknown-linux-gnueabihf/release/radio_player dist/
+    cp emisoras.m3u dist/
+    cp minutos_noticias.txt dist/
+    cp noticias.m3u dist/
+    cp run_cvlc.sh dist/
+    cp run_on_rpi.sh dist/
+    cp check_gpio.sh dist/
+    chmod +x dist/*.sh
+else
+    echo "Error en la compilación"
+    exit 1
+fi
+```
+
+## Dependencias por Opción
+
+| Opción | Docker | QEMU | cross | Compiladores ARM |
+|--------|--------|------|-------|------------------|
+| `cross` | ✅ | ✅ | ✅ | ❌ |
+| Compilar en RPi | ❌ | ❌ | ❌ | ❌ |
+| Cargo directo | ❌ | ❌ | ❌ | ✅ |
 
 
 

@@ -117,12 +117,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _current_station_main = current_station_index.clone();
     let _saved_station_main = saved_station_index.clone();
     
+    let last_station_path_clone = last_station_path.clone();
     tokio::spawn(async move {
         match signal::ctrl_c().await {
             Ok(()) => {
                 r_running.store(false, Ordering::SeqCst);
                 let index = r_current_index.load(Ordering::SeqCst);
-                let _ = save_last_station_index(&last_station_path.to_string_lossy(), index);
+                let _ = save_last_station_index(&last_station_path_clone.to_string_lossy(), index);
             }
             Err(_) => {}
         }
@@ -554,6 +555,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         
         if direction != 2 {
             station_direction.store(1, Ordering::SeqCst);
+        }
+        
+        if let Err(e) = save_last_station_index(&last_station_path.to_string_lossy(), current_station_index.load(Ordering::SeqCst)) {
+            eprintln!("Error guardando estación: {}", e);
         }
         
         if direction == 3 {

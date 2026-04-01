@@ -41,10 +41,11 @@ if [ $? -eq 0 ]; then
     ls -la dist/
     
     echo ""
-# Dar permisos a los scripts
+# Dar permisos a los scripts y el ejecutable
     chmod +x dist/run_cvlc.sh
     chmod +x dist/run_on_rpi.sh
     chmod +x dist/check_gpio.sh
+    chmod +x dist/radio_player
     
     echo "Configuración:"
     echo "  - Botón siguiente: GPIO 20 (pin 38)"
