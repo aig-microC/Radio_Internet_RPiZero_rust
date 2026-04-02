@@ -416,7 +416,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     while running.load(Ordering::SeqCst) {
         let current_index = current_station_index.load(Ordering::SeqCst);
-        let direction = station_direction.load(Ordering::SeqCst);
         
         let should_play_news = {
             if news_enabled.load(Ordering::SeqCst) {
@@ -553,15 +552,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         
         station_switch.store(false, Ordering::SeqCst);
         
-        if direction != 2 {
-            station_direction.store(1, Ordering::SeqCst);
-        }
+        let new_direction = station_direction.load(Ordering::SeqCst);
         
-        if let Err(e) = save_last_station_index(&last_station_path.to_string_lossy(), current_station_index.load(Ordering::SeqCst)) {
+        let final_index = current_station_index.load(Ordering::SeqCst);
+        
+        if let Err(e) = save_last_station_index(&last_station_path.to_string_lossy(), final_index) {
             eprintln!("Error guardando estación: {}", e);
         }
         
-        if direction == 3 {
+        if new_direction == -1 {
+            station_direction.store(1, Ordering::SeqCst);
+        }
+        
+        if new_direction == 3 {
             news_station.store(false, Ordering::SeqCst);
             news_active.store(false, Ordering::SeqCst);
             station_direction.store(1, Ordering::SeqCst);

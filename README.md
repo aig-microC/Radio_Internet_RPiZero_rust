@@ -2,9 +2,9 @@
 
 **Angel de la Iglesia Gonzalo**
 
-**Versión/rev**: 1/1
+**Versión/rev**: 1/2
 
-**Fecha**:20250401
+**Fecha**:20250402
 
 **Abstract**: This project is for building an internet radio using a *Raspberry Pi Zero* board and a program written in *rust* to control the *RPi*, a DAC converter, and a 16-column, 2-row display. The amplifier uses a *PAM8403-Amp3W* module with a potentiometer. [*VLC*](https://images.videolan.org/vlc/index.es.html) is used for playing radio stations.
 
@@ -579,7 +579,11 @@ Para copiar el programa de radio de internet, desde el *PC de Desarrollo* a la *
 
 Nos ponemos en el subdirectorio `dist` del proyecto (que está debajo de donde tenemos *Cargo.toml*) y abrimos un terminal. Tecleamos `mc`. En la ventana que se abre seleccionamos `Derecho` y seleccionamos `conexión por SSH`, en la ventana que se abre tecleamos `usuario@192.168.1.xxx` (la dirección que corresponda) y damos aceptar.Entramos en ´/home/usuario/bin´ y pinchamos en el panel izquierdo. Pulsamos `CTRL r` para actualizar el directorio `dist` y `MAY *` para seleccionar todos los archivos y pulsamos `F5` para copiar todos los archivos en el subdirectorio `bin` de la *RPi Zero*.
 
-> **NOTA**: Asegurate que el ejecutable `radio_player` tiene permiso de ejecución. Si no la tiene haz: `chmod +x radio_player`.
+Otra forma, más sencilla, es usar el comando `scp` desde el subdirectorio del proyecto (donde está `Cargo.toml`):
+
+```sh
+scp -r dist usuario@192.168.1.xxx:/home/usuario/bin
+```
 
 ### 3.2 Inicio automático del programa en el arranque
 
